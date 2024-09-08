@@ -143,7 +143,6 @@ class BASICInterpreter:
         self.running = False
         self.call_stack = []
         self.stop_flag = False
-        self.quit_flag = False
 
     def is_operator(self, char):
         return char in "+-*/%=<>|&"
@@ -306,7 +305,7 @@ class BASICInterpreter:
         self.running = True
         self.stop_flag = False
         while self.running and not self.stop_flag and self.pc <= self.pc_limit:
-            if "GO" in kb.get_new_keys():
+            if "G0" in kb.get_new_keys():
                 print("[BREAK] GO PRESSED.")
                 break
             
@@ -442,9 +441,7 @@ class BASICInterpreter:
 
     def cmd_quit(self):
         print("Exiting BASIC interpreter...")
-        self.quit_flag = True
-        self.stop_flag = True
-        self.running = False
+        machine.reset()
 
     def add_line(self, line_number, line):
         self.lines[line_number] = line
@@ -500,7 +497,7 @@ def main_loop():
         
         # if there are keys, convert them to a string, and store for display
         if keys:
-            if 'GO' in keys:
+            if 'G0' in keys:
                 machine.reset()
             if 'SPC' in keys:
                 current_text.append(' ')
@@ -539,10 +536,6 @@ def main_loop():
                 current_text = []
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ HOUSEKEEPING: ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        
-        if interpreter.quit_flag:
-            # Quit to MHLauncher - blank file
-            boot_into_file('')
 
         # anything that needs to be done to prepare for next loop
         
