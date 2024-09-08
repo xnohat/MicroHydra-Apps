@@ -1,0 +1,18 @@
+author: xnohat
+author_link: https://github.com/xnohat
+license: MIT
+license_link: https://github.com/echo-lalia/MicroHydra-Apps/blob/main/LICENSE
+app_version: 1.1
+
+short_description: A BASIC interpreter and REPL
+
+description: |
+  Nothing pairs better than BASIC and a card computer. 
+
+  M5Basic implements a simple BASIC interpreter and REPL, with a nostalgic flavor of the 1980s. 
+
+  Note that the documentation is in the comments at the beginning of **M5Basic.py**, and some functionalities still require stability improvements.
+
+
+devices:
+- Cardputer
