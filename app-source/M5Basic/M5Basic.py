@@ -3,7 +3,7 @@ import sys
 from lib import userinput
 from lib.hydra.config import Config
 from lib import display
-
+import math, random
 machine.freq(240_000_000)
 """
 MicroHydra BASIC Interface
@@ -144,6 +144,20 @@ class BASICInterpreter:
         self.call_stack = []
         self.stop_flag = False
 
+        self.last_random = random.random()
+        self.functions = {
+            "ABS": abs,
+            "ATN": math.atan,
+            "COS": math.cos,
+            "EXP": math.exp,
+            "INT": lambda x: int(x),
+            "LOG": math.log,
+            "RND": self.rnd,
+            "SIN": math.sin,
+            "SQR": math.sqrt,
+            "TAN": math.tan
+        }
+
     def is_operator(self, char):
         return char in "+-*/%=<>|&"
 
@@ -190,21 +204,34 @@ class BASICInterpreter:
 
         return tokens
 
+    def rnd(self, x=None):
+        if x is None:
+            self.last_random = random.random()
+        elif x < 0:
+            random.seed(x)
+        elif x > 0:
+            pass  # Use the last generated random number
+        else:  # x == 0
+            self.last_random = 0
+        return self.last_random
+
     def eval_expr(self, expr):
         try:
-            if '"' in expr:
-                return eval(expr)
+            if expr.startswith('"') and expr.endswith('"'):
+                return expr[1:-1]  # Return string literals as-is
             
             for var in self.variables:
                 expr = expr.replace(var, str(self.variables[var]))
             
+            for func_name in self.functions:
+                expr = expr.replace(func_name, f"self.functions['{func_name}']")
+
             for xx in {"==","!=","<=",">="}:
                 expr = expr.replace(xx[0] + ' ' + xx[1],xx)
                 
-            return eval(expr)
+            return eval(expr, {"self": self})
         except Exception as e:
-            print("Error in expression:")
-            print(expr)
+            print(f"Error in expression: {expr}")
             print(e)
             return None
 
@@ -217,7 +244,7 @@ class BASICInterpreter:
         args = tokens[1:]
 
         if cmd == "PRINT":
-            self.cmd_print(args)
+            self.cmd_print(line[5:].strip())
         elif cmd == "LET":
             self.cmd_let(args)
         elif cmd == "FOR":
@@ -266,14 +293,36 @@ class BASICInterpreter:
             except Exception as e:
                 print("Unknown command or error:", e)
 
-    def cmd_print(self, args):
-        to_print = " ".join(args).split(';')
+    def cmd_print(self, args_string):
+        to_print = []
+        current_expr = ""
+        in_quotes = False
+        
+        for char in args_string:
+            if char == '"':
+                in_quotes = not in_quotes
+                current_expr += char
+            elif char in [';', ','] and not in_quotes:
+                if current_expr:
+                    to_print.append(self.eval_expr(current_expr.strip()))
+                    current_expr = ""
+                to_print.append(char)
+            else:
+                current_expr += char
+        
+        if current_expr:
+            to_print.append(self.eval_expr(current_expr.strip()))
+        
         print_str = ""
         for item in to_print:
-            if item.strip():
-                print_str += f"{self.eval_expr(item)}"
+            if item == ",":
+                print_str += "        " # 8 spaces instead \t tab because esp32 cant display tabs
+            elif item == ";":
+                print_str += " "
+            else:
+                print_str += str(item)
         
-        print(print_str)
+        print(print_str.strip())
 
     def cmd_let(self, args):
         var_name = args[0]
